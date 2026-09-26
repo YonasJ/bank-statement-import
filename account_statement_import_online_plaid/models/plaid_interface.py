@@ -42,14 +42,27 @@ class PlaidInterface(models.AbstractModel):
         except plaid.ApiException as e:
             raise ValidationError(_("Error getting client api: %s") % e.body) from e
 
-    def _link(self, client, language, country_code, company_name, products):
-        request = LinkTokenCreateRequest(
-            products=[Products(product) for product in products],
-            client_name=company_name,
-            country_codes=[CountryCode(country_code)],
-            language=language,
-            user=LinkTokenCreateRequestUser(client_user_id="client"),
-        )
+    def _link(
+        self,
+        client,
+        language,
+        country_code,
+        company_name,
+        products,
+        access_token=None,
+    ):
+        kwargs = {
+            "client_name": company_name,
+            "country_codes": [CountryCode(country_code)],
+            "language": language,
+            "user": LinkTokenCreateRequestUser(client_user_id="client"),
+        }
+        if access_token:
+            kwargs["access_token"] = access_token
+        else:
+            kwargs["products"] = [Products(product) for product in products]
+
+        request = LinkTokenCreateRequest(**kwargs)
         try:
             response = client.link_token_create(request)
         except plaid.ApiException as e:

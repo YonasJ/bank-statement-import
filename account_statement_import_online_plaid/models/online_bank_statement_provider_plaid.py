@@ -85,6 +85,7 @@ class OnlineBankStatementProvider(models.Model):
             country_code=self._country_code(),
             company_name=company_name,
             products=["transactions"],
+            access_token=self.plaid_access_token or None,
         )
         return {
             "type": "ir.actions.client",
@@ -303,14 +304,19 @@ class OnlineBankStatementProvider(models.Model):
     @api.model
     def plaid_create_access_token(self, public_token, active_id):
         provider = self.browse(active_id)
-        plaid_interface = self.env["plaid.interface"]
-        client = plaid_interface._client(
-            provider.username, provider.password, provider.plaid_host
-        )
-        args = [client, public_token]
-        provider.plaid_access_token = plaid_interface._login(*args)
+        if public_token:
+            plaid_interface = self.env["plaid.interface"]
+            client = plaid_interface._client(
+                provider.username, provider.password, provider.plaid_host
+            )
+            try:
+                args = [client, public_token]
+                provider.plaid_access_token = plaid_interface._login(*args)
+            except Exception as e:
+                _logger.info("Public token exchange in update mode: %s", e)
         if provider.plaid_access_token:
-            provider._auto_match_plaid_account()
+            if not provider.plaid_account_id:
+                provider._auto_match_plaid_account()
             return True
         return False
 

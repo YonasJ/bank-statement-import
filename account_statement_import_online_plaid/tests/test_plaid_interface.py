@@ -60,6 +60,24 @@ class TestPlaidInterface(common.TransactionCase):
         self.assertTrue(link)
         self.assertEqual(link, "isalinktoken")
 
+    @patch("plaid.api.plaid_api.PlaidApi.link_token_create")
+    def test_link_update_mode(self, link_token_create):
+        interface_model = self.env["plaid.interface"]
+        link_token_create.return_value = MagicMock(
+            to_dict=lambda: {"link_token": "isalinktoken", "expiration": "isadate"}
+        )
+        client = interface_model._client("client_id", "secret", "sandbox")
+        link = interface_model._link(
+            client=client,
+            language="en",
+            country_code="US",
+            company_name="company",
+            products=["transactions"],
+            access_token="existing_token",
+        )
+        self.assertTrue(link)
+        self.assertEqual(link, "isalinktoken")
+
     @patch(
         "plaid.api.plaid_api.PlaidApi.link_token_create",
         side_effect=plaid.ApiException(
