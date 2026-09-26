@@ -32,6 +32,22 @@
                         required="service == 'plaid'"
                         string="Plaid Host"
                     />
+                    <field
+                        name="plaid_account_name"
+                        invisible="not plaid_account_name"
+                    />
+                    <field
+                        name="plaid_account_mask"
+                        invisible="not plaid_account_mask"
+                    />
+                    <field
+                        name="plaid_account_currency"
+                        invisible="not plaid_account_currency"
+                    />
+                    <field
+                        name="plaid_account_id"
+                        invisible="not plaid_account_id"
+                    />
                 </group>
             </xpath>
             <xpath expr="//header" position="inside">
@@ -41,6 +57,20 @@
                     name="action_sync_with_plaid"
                     string="Sync with Plaid.com"
                     invisible="service != 'plaid'"
+                />
+                <button
+                    type="object"
+                    class="btn btn-secondary"
+                    name="action_select_plaid_account"
+                    string="Select Plaid Account"
+                    invisible="service != 'plaid' or not plaid_access_token"
+                />
+                <button
+                    type="object"
+                    class="btn btn-secondary"
+                    name="action_link_existing_plaid"
+                    string="Link Existing Plaid Connection"
+                    invisible="service != 'plaid' or plaid_access_token"
                 />
             </xpath>
         </field>

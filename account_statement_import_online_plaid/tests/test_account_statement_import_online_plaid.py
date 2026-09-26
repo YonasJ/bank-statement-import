@@ -155,6 +155,7 @@ class TestAccountStatementImportOnlinePlaid(common.TransactionCase):
                 "password": "password",
                 "plaid_host": "sandbox",
                 "plaid_access_token": "access_token",
+                "plaid_account_id": "Qxm5dj75QXuBe5QVPAwbIN1PgEMExnCGroLgv",
                 "journal_id": self.journal.id,
                 # To get all the moves in a month at once
                 "statement_creation_mode": "monthly",

@@ -2,7 +2,7 @@
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
 {
     "name": "Online Bank Statements: plaid.com",
-    "version": "18.0.1.0.0",
+    "version": "18.0.1.1.0",
     "category": "Account",
     "website": "https://github.com/OCA/bank-statement-import",
     "author": "Binhex, Odoo Community Association (OCA)",
@@ -10,7 +10,10 @@
     "installable": True,
     "depends": ["account_statement_import_online"],
     "data": [
+        "security/ir.model.access.csv",
         "views/online_bank_statement_provider.xml",
+        "wizards/plaid_account_selector.xml",
+        "wizards/online_bank_statement_provider_existing.xml",
     ],
     "assets": {
         "web.assets_backend": [

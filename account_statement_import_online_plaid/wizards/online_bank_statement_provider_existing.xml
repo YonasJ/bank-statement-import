@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <record id="view_online_bank_statement_provider_existing_plaid_form" model="ir.ui.view">
+        <field name="name">online.bank.statement.provider.existing.plaid.form</field>
+        <field name="model">online.bank.statement.provider.existing.plaid</field>
+        <field name="arch" type="xml">
+            <form string="Link Existing Plaid Connection">
+                <p class="text-muted">
+                    Select an existing bank provider that is already connected to Plaid.
+                    The Plaid connection and credentials will be shared so you can select another account from the same bank login without reconnecting.
+                </p>
+                <group>
+                    <field name="provider_id" invisible="1" />
+                    <field name="other_provider_id" />
+                </group>
+                <footer>
+                    <button
+                        name="action_link_and_select"
+                        type="object"
+                        string="Link Connection"
+                        class="btn-primary"
+                    />
+                    <button string="Cancel" class="btn-secondary" special="cancel" />
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

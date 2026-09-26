@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <record id="view_plaid_account_selector_wizard_form" model="ir.ui.view">
+        <field name="name">plaid.account.selector.wizard.form</field>
+        <field name="model">plaid.account.selector.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Select Plaid Account">
+                <p class="text-muted">
+                    Select which account from this Plaid connection corresponds to this bank journal.
+                </p>
+                <field name="provider_id" invisible="1" />
+                <field name="line_ids">
+                    <list create="0" delete="0" edit="0">
+                        <field name="name" string="Account Name" />
+                        <field name="mask" string="Mask (Last Digits)" />
+                        <field name="subtype" string="Subtype" />
+                        <field name="currency" string="Currency" />
+                        <button
+                            name="action_select"
+                            type="object"
+                            string="Select This Account"
+                            class="btn btn-primary btn-sm"
+                        />
+                    </list>
+                </field>
+                <footer>
+                    <button string="Cancel" class="btn-secondary" special="cancel" />
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

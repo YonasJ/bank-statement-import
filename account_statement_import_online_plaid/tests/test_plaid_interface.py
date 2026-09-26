@@ -138,3 +138,40 @@ class TestPlaidInterface(common.TransactionCase):
             start_date,
             end_date,
         )
+
+    @patch("plaid.api.plaid_api.PlaidApi.accounts_get")
+    def test_get_accounts(self, accounts_get):
+        interface_model = self.env["plaid.interface"]
+        client = interface_model._client("client_id", "secret", "sandbox")
+        accounts_get.return_value = MagicMock(
+            to_dict=lambda: {
+                "accounts": [
+                    {
+                        "account_id": "acc_1",
+                        "name": "Checking",
+                        "mask": "1234",
+                        "balances": {"iso_currency_code": "USD"},
+                    }
+                ]
+            }
+        )
+        res = interface_model._get_accounts(client, "isaccesstoken")
+        self.assertEqual(len(res), 1)
+        self.assertEqual(res[0]["account_id"], "acc_1")
+
+    @patch("plaid.api.plaid_api.PlaidApi.transactions_get")
+    def test_get_transactions_with_account_ids(self, transactions_get):
+        interface_model = self.env["plaid.interface"]
+        client = interface_model._client("client_id", "secret", "sandbox")
+        transactions_get.return_value = {
+            "transactions": TRANSACTIONS,
+            "total_transactions": len(TRANSACTIONS),
+        }
+        res = interface_model._get_transactions(
+            client,
+            "isaccesstoken",
+            datetime.datetime.now() - relativedelta(months=1),
+            datetime.datetime.now(),
+            account_ids=["acc_1"],
+        )
+        self.assertTrue(res)

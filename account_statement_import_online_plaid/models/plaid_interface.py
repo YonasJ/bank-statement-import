@@ -3,6 +3,7 @@
 
 import plaid
 from plaid.api import plaid_api
+from plaid.model.accounts_get_request import AccountsGetRequest
 from plaid.model.country_code import CountryCode
 from plaid.model.item_public_token_exchange_request import (
     ItemPublicTokenExchangeRequest,
@@ -63,10 +64,22 @@ class PlaidInterface(models.AbstractModel):
             raise ValidationError(_("Error getting access token: %s") % e.body) from e
         return response["access_token"]
 
-    def _get_transactions(self, client, access_token, start_date, end_date):
+    def _get_accounts(self, client, access_token):
+        request = AccountsGetRequest(access_token=access_token)
+        try:
+            response = client.accounts_get(request)
+        except plaid.ApiException as e:
+            raise ValidationError(_("Error getting accounts: %s") % e.body) from e
+        return response.to_dict()["accounts"]
+
+    def _get_transactions(
+        self, client, access_token, start_date, end_date, account_ids=None
+    ):
         options = TransactionsGetRequestOptions(
             count=500,
         )
+        if account_ids:
+            options.account_ids = account_ids
         request = TransactionsGetRequest(
             access_token=access_token,
             start_date=start_date.date(),
