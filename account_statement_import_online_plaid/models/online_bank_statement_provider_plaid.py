@@ -36,7 +36,7 @@ class OnlineBankStatementProvider(models.Model):
             ("sandbox", "Sandbox"),
             ("production", "Production"),
         ],
-        default="sandbox",
+        string="Plaid Host",
     )
     plaid_account_id = fields.Char(string="Plaid Account ID")
     plaid_account_name = fields.Char(string="Plaid Account Name", readonly=True)
@@ -44,6 +44,32 @@ class OnlineBankStatementProvider(models.Model):
     plaid_account_currency = fields.Char(
         string="Plaid Account Currency", readonly=True
     )
+
+    def _get_plaid_client_id(self):
+        self.ensure_one()
+        return self.username or self.company_id.plaid_client_id or ""
+
+    def _get_plaid_secret(self):
+        self.ensure_one()
+        return self.password or self.company_id.plaid_secret or ""
+
+    def _get_plaid_host(self):
+        self.ensure_one()
+        return self.plaid_host or self.company_id.plaid_host or "sandbox"
+
+    def _get_plaid_client(self):
+        self.ensure_one()
+        client_id = self._get_plaid_client_id()
+        secret = self._get_plaid_secret()
+        host = self._get_plaid_host()
+        if not client_id or not secret:
+            raise UserError(
+                _(
+                    "Plaid Client ID or Secret Key not found. Please configure them in Accounting Settings or on this provider."
+                )
+            )
+        plaid_interface = self.env["plaid.interface"]
+        return plaid_interface._client(client_id, secret, host)
 
     def _obtain_statement_data(self, date_since, date_until):
         self.ensure_one()
@@ -72,8 +98,7 @@ class OnlineBankStatementProvider(models.Model):
     def action_sync_with_plaid(self):
         self.ensure_one()
         plaid_interface = self.env["plaid.interface"]
-        args = [self.username, self.password, self.plaid_host]
-        client = plaid_interface._client(*args)
+        client = self._get_plaid_client()
         lang = (
             self.env["res.lang"]._lang_get(self.env.lang or self.env.user.lang).iso_code
         )
@@ -105,9 +130,7 @@ class OnlineBankStatementProvider(models.Model):
             return False
         if accounts is None:
             plaid_interface = self.env["plaid.interface"]
-            client = plaid_interface._client(
-                self.username, self.password, self.plaid_host
-            )
+            client = self._get_plaid_client()
             try:
                 accounts = plaid_interface._get_accounts(
                     client, self.plaid_access_token
@@ -196,9 +219,7 @@ class OnlineBankStatementProvider(models.Model):
         if not self.plaid_access_token:
             raise UserError(_("Please link your Plaid account first."))
         plaid_interface = self.env["plaid.interface"]
-        client = plaid_interface._client(
-            self.username, self.password, self.plaid_host
-        )
+        client = self._get_plaid_client()
         accounts = plaid_interface._get_accounts(client, self.plaid_access_token)
         if not accounts:
             raise UserError(_("No accounts returned by Plaid for this connection."))
@@ -285,8 +306,7 @@ class OnlineBankStatementProvider(models.Model):
                 % self.journal_id.display_name
             )
         plaid_interface = self.env["plaid.interface"]
-        args = [self.username, self.password, self.plaid_host]
-        client = plaid_interface._client(*args)
+        client = self._get_plaid_client()
         transactions = plaid_interface._get_transactions(
             client,
             self.plaid_access_token,
@@ -305,10 +325,8 @@ class OnlineBankStatementProvider(models.Model):
     def plaid_create_access_token(self, public_token, active_id):
         provider = self.browse(active_id)
         if public_token:
+            client = provider._get_plaid_client()
             plaid_interface = self.env["plaid.interface"]
-            client = plaid_interface._client(
-                provider.username, provider.password, provider.plaid_host
-            )
             try:
                 args = [client, public_token]
                 provider.plaid_access_token = plaid_interface._login(*args)

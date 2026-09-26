@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <record id="res_config_settings_view_form" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit.plaid</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="account.res_config_settings_view_form" />
+        <field name="arch" type="xml">
+            <xpath expr="//app[@name='account']" position="inside">
+                <block title="Plaid.com Synchronization" name="plaid_settings">
+                    <setting
+                        id="plaid_credentials_setting"
+                        string="Plaid Credentials"
+                        help="Company-wide API credentials for Plaid. Bank journals will automatically use these credentials unless overridden."
+                    >
+                        <div class="content-group">
+                            <div class="row mt16">
+                                <label
+                                    for="plaid_client_id"
+                                    class="col-lg-3 o_light_label"
+                                />
+                                <field name="plaid_client_id" password="True" />
+                            </div>
+                            <div class="row mt16">
+                                <label
+                                    for="plaid_secret"
+                                    class="col-lg-3 o_light_label"
+                                />
+                                <field name="plaid_secret" password="True" />
+                            </div>
+                            <div class="row mt16">
+                                <label
+                                    for="plaid_host"
+                                    class="col-lg-3 o_light_label"
+                                />
+                                <field name="plaid_host" />
+                            </div>
+                        </div>
+                    </setting>
+                </block>
+            </xpath>
+        </field>
+    </record>
+</odoo>

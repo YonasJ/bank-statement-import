@@ -17,19 +17,18 @@
                     <field name="plaid_access_token" invisible="1" />
                     <field
                         name="username"
-                        required="service == 'plaid'"
                         password="1"
-                        string="Client ID"
+                        string="Client ID (Override)"
+                        placeholder="Leave empty to use Company Settings"
                     />
                     <field
                         name="password"
-                        required="service == 'plaid'"
                         password="1"
-                        string="Secret Key"
+                        string="Secret Key (Override)"
+                        placeholder="Leave empty to use Company Settings"
                     />
                     <field
                         name="plaid_host"
-                        required="service == 'plaid'"
                         string="Plaid Host"
                     />
                     <field

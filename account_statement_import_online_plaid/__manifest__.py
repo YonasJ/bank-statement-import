@@ -11,6 +11,7 @@
     "depends": ["account_statement_import_online"],
     "data": [
         "security/ir.model.access.csv",
+        "views/res_config_settings_views.xml",
         "views/online_bank_statement_provider.xml",
         "wizards/plaid_account_selector.xml",
         "wizards/online_bank_statement_provider_existing.xml",
