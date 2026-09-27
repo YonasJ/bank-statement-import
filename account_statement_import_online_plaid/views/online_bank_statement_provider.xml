@@ -15,11 +15,15 @@
                     invisible="service != 'plaid'"
                 >
                     <field
+                        name="plaid_connection_id"
+                        string="Bank Connection"
+                        options="{'no_create': True}"
+                    />
+                    <field
                         name="plaid_bank_account_id"
                         string="Plaid Account"
                         options="{'no_create': True}"
                     />
-                    <field name="plaid_connection_id" invisible="1" />
                     <field name="plaid_account_id" invisible="1" />
                     <field name="plaid_account_name" invisible="1" />
                     <field name="plaid_account_mask" invisible="1" />

@@ -14,6 +14,13 @@ class PlaidBankAccount(models.Model):
         required=True,
         ondelete="cascade",
     )
+    company_id = fields.Many2one(
+        "res.company",
+        string="Company",
+        related="connection_id.company_id",
+        store=True,
+        readonly=True,
+    )
     name = fields.Char(string="Account Name", required=True)
     plaid_account_id = fields.Char(string="Plaid Account ID", required=True, index=True)
     mask = fields.Char(string="Account Mask (Last 4)")

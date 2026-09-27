@@ -45,7 +45,7 @@ class OnlineBankStatementProvider(models.Model):
     plaid_bank_account_id = fields.Many2one(
         "plaid.bank.account",
         string="Plaid Bank Account",
-        domain="[('connection_id', '=', plaid_connection_id)]",
+        domain="['|', ('company_id', '=', False), ('company_id', '=', company_id)]",
     )
     plaid_account_id = fields.Char(string="Plaid Account ID")
     plaid_account_name = fields.Char(string="Plaid Account Name", readonly=True)
@@ -58,6 +58,7 @@ class OnlineBankStatementProvider(models.Model):
     def _onchange_plaid_connection_id(self):
         if (
             self.plaid_bank_account_id
+            and self.plaid_connection_id
             and self.plaid_bank_account_id.connection_id != self.plaid_connection_id
         ):
             self.plaid_bank_account_id = False
@@ -65,10 +66,29 @@ class OnlineBankStatementProvider(models.Model):
             self.plaid_account_name = False
             self.plaid_account_mask = False
             self.plaid_account_currency = False
+        if self.plaid_connection_id:
+            return {
+                "domain": {
+                    "plaid_bank_account_id": [
+                        ("connection_id", "=", self.plaid_connection_id.id)
+                    ]
+                }
+            }
+        return {
+            "domain": {
+                "plaid_bank_account_id": [
+                    "|",
+                    ("company_id", "=", False),
+                    ("company_id", "=", self.company_id.id if self.company_id else False),
+                ]
+            }
+        }
 
     @api.onchange("plaid_bank_account_id")
     def _onchange_plaid_bank_account_id(self):
         if self.plaid_bank_account_id:
+            if not self.plaid_connection_id or self.plaid_connection_id != self.plaid_bank_account_id.connection_id:
+                self.plaid_connection_id = self.plaid_bank_account_id.connection_id
             self.plaid_account_id = self.plaid_bank_account_id.plaid_account_id
             self.plaid_account_name = self.plaid_bank_account_id.name
             self.plaid_account_mask = self.plaid_bank_account_id.mask
@@ -79,6 +99,7 @@ class OnlineBankStatementProvider(models.Model):
         for vals in vals_list:
             if vals.get("plaid_bank_account_id"):
                 acc = self.env["plaid.bank.account"].browse(vals["plaid_bank_account_id"])
+                vals["plaid_connection_id"] = acc.connection_id.id
                 vals["plaid_account_id"] = acc.plaid_account_id
                 vals["plaid_account_name"] = acc.name
                 vals["plaid_account_mask"] = acc.mask
@@ -88,6 +109,7 @@ class OnlineBankStatementProvider(models.Model):
     def write(self, vals):
         if vals.get("plaid_bank_account_id"):
             acc = self.env["plaid.bank.account"].browse(vals["plaid_bank_account_id"])
+            vals["plaid_connection_id"] = acc.connection_id.id
             vals["plaid_account_id"] = acc.plaid_account_id
             vals["plaid_account_name"] = acc.name
             vals["plaid_account_mask"] = acc.mask
