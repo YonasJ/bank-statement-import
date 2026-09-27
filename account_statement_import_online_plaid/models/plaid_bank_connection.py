@@ -79,7 +79,7 @@ class PlaidBankConnection(models.Model):
         return self.env["plaid.interface"]._client(client_id, secret, host)
 
     @api.model
-    def action_connect_new_bank(self):
+    def action_connect_new_bank(self, *args, **kwargs):
         connection = self.create({"name": "New Bank Connection"})
         return connection.action_connect_plaid()
 
@@ -138,6 +138,7 @@ class PlaidBankConnection(models.Model):
             },
         }
 
+    @api.model
     def plaid_create_access_token(self, public_token, active_id):
         connection = self.browse(active_id)
         if public_token:
@@ -165,11 +166,14 @@ class PlaidBankConnection(models.Model):
                 pass
 
             connection.action_fetch_accounts()
+        return True
 
+    @api.model
     def plaid_update_access_token(self, public_token, active_id):
         connection = self.browse(active_id)
         connection.state = "connected"
         connection.action_fetch_accounts()
+        return True
 
     def action_fetch_accounts(self):
         self.ensure_one()
