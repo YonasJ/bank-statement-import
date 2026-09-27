@@ -14,7 +14,6 @@
         "views/plaid_bank_connection_views.xml",
         "views/res_config_settings_views.xml",
         "views/online_bank_statement_provider.xml",
-        "views/account_journal.xml",
         "wizards/plaid_account_selector.xml",
         "wizards/online_bank_statement_provider_existing.xml",
     ],
