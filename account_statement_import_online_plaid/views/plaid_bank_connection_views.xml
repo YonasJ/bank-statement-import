@@ -94,14 +94,15 @@
                     </group>
                     <notebook>
                         <page string="Bank Accounts" name="accounts">
-                            <field name="account_ids" readonly="1">
-                                <list>
-                                    <field name="name" />
-                                    <field name="mask" />
-                                    <field name="account_type" />
-                                    <field name="subtype" />
-                                    <field name="currency_code" />
-                                    <field name="plaid_account_id" />
+                            <field name="account_ids">
+                                <list editable="bottom" create="false" delete="false">
+                                    <field name="name" readonly="1" />
+                                    <field name="mask" readonly="1" />
+                                    <field name="account_type" readonly="1" />
+                                    <field name="subtype" readonly="1" />
+                                    <field name="currency_code" readonly="1" />
+                                    <field name="journal_id" options="{'no_create': True}" />
+                                    <field name="plaid_account_id" optional="hide" readonly="1" />
                                 </list>
                             </field>
                         </page>
