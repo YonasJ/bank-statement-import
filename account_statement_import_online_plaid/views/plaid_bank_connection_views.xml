@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <record id="view_plaid_bank_connection_tree" model="ir.ui.view">
+        <field name="name">plaid.bank.connection.list</field>
+        <field name="model">plaid.bank.connection</field>
+        <field name="arch" type="xml">
+            <list string="Plaid Bank Connections">
+                <header>
+                    <button
+                        name="action_connect_new_bank"
+                        type="object"
+                        string="Connect New Bank"
+                        class="btn btn-primary"
+                        display="always"
+                    />
+                </header>
+                <field name="name" />
+                <field name="institution_name" />
+                <field name="account_count" string="Accounts" />
+                <field name="provider_count" string="Linked Journals" />
+                <field
+                    name="state"
+                    widget="badge"
+                    decoration-success="state == 'connected'"
+                    decoration-info="state == 'draft'"
+                    decoration-danger="state == 'error'"
+                />
+            </list>
+        </field>
+    </record>
+
+    <record id="view_plaid_bank_connection_form" model="ir.ui.view">
+        <field name="name">plaid.bank.connection.form</field>
+        <field name="model">plaid.bank.connection</field>
+        <field name="arch" type="xml">
+            <form string="Plaid Bank Connection">
+                <header>
+                    <button
+                        name="action_connect_plaid"
+                        type="object"
+                        string="Connect New Bank"
+                        class="btn btn-primary"
+                        invisible="state == 'connected'"
+                    />
+                    <button
+                        name="action_update_credentials"
+                        type="object"
+                        string="Update Credentials (MFA / Relink)"
+                        class="btn btn-secondary"
+                        invisible="state != 'connected'"
+                    />
+                    <button
+                        name="action_fetch_accounts"
+                        type="object"
+                        string="Refresh Accounts"
+                        class="btn btn-secondary"
+                        invisible="not plaid_access_token"
+                    />
+                    <field
+                        name="state"
+                        widget="statusbar"
+                        statusbar_visible="draft,connected"
+                    />
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button
+                            name="action_view_providers"
+                            type="object"
+                            class="oe_stat_button"
+                            icon="fa-book"
+                        >
+                            <field
+                                name="provider_count"
+                                widget="statinfo"
+                                string="Linked Journals"
+                            />
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <label for="name" class="oe_edit_only" />
+                        <h1>
+                            <field name="name" placeholder="e.g. RBC Royal Bank" />
+                        </h1>
+                    </div>
+                    <group>
+                        <group name="institution">
+                            <field name="institution_name" />
+                            <field name="institution_id" />
+                        </group>
+                        <group name="company">
+                            <field name="company_id" groups="base.group_multi_company" />
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Bank Accounts" name="accounts">
+                            <field name="account_ids" readonly="1">
+                                <list>
+                                    <field name="name" />
+                                    <field name="mask" />
+                                    <field name="account_type" />
+                                    <field name="subtype" />
+                                    <field name="currency_code" />
+                                    <field name="plaid_account_id" />
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Technical" name="technical" groups="base.group_no_one">
+                            <group>
+                                <field name="plaid_item_id" readonly="1" />
+                                <field name="plaid_access_token" password="True" />
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_plaid_bank_connection" model="ir.actions.act_window">
+        <field name="name">Plaid Bank Connections</field>
+        <field name="res_model">plaid.bank.connection</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Connect a bank with Plaid
+            </p>
+            <p>
+                Click "Connect New Bank" to log in to your financial institution.
+                Once connected, you can link individual bank accounts directly on your accounting journals.
+            </p>
+        </field>
+    </record>
+
+    <menuitem
+        id="menu_plaid_bank_connection"
+        name="Plaid Bank Connections"
+        parent="account.account_banks_menu"
+        action="action_plaid_bank_connection"
+        sequence="95"
+    />
+</odoo>

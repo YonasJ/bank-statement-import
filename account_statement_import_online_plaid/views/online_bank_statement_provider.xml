@@ -14,62 +14,29 @@
                     string="Plaid config"
                     invisible="service != 'plaid'"
                 >
+                    <field
+                        name="plaid_bank_account_id"
+                        string="Plaid Account"
+                        options="{'no_create': True}"
+                    />
+                    <field name="plaid_connection_id" invisible="1" />
+                    <field name="plaid_account_id" invisible="1" />
+                    <field name="plaid_account_name" invisible="1" />
+                    <field name="plaid_account_mask" invisible="1" />
+                    <field name="plaid_account_currency" invisible="1" />
                     <field name="plaid_access_token" invisible="1" />
-                    <field
-                        name="username"
-                        password="1"
-                        string="Client ID (Override)"
-                        placeholder="Leave empty to use Company Settings"
-                    />
-                    <field
-                        name="password"
-                        password="1"
-                        string="Secret Key (Override)"
-                        placeholder="Leave empty to use Company Settings"
-                    />
-                    <field
-                        name="plaid_host"
-                        string="Plaid Host"
-                    />
-                    <field
-                        name="plaid_account_name"
-                        invisible="not plaid_account_name"
-                    />
-                    <field
-                        name="plaid_account_mask"
-                        invisible="not plaid_account_mask"
-                    />
-                    <field
-                        name="plaid_account_currency"
-                        invisible="not plaid_account_currency"
-                    />
-                    <field
-                        name="plaid_account_id"
-                        invisible="not plaid_account_id"
-                    />
+                    <field name="username" invisible="1" />
+                    <field name="password" invisible="1" />
+                    <field name="plaid_host" invisible="1" />
                 </group>
             </xpath>
             <xpath expr="//header" position="inside">
                 <button
-                    type="object"
+                    type="action"
                     class="btn btn-secondary"
-                    name="action_sync_with_plaid"
-                    string="Sync with Plaid.com"
+                    name="%(action_plaid_bank_connection)d"
+                    string="Plaid Bank Connections"
                     invisible="service != 'plaid'"
-                />
-                <button
-                    type="object"
-                    class="btn btn-secondary"
-                    name="action_select_plaid_account"
-                    string="Select Plaid Account"
-                    invisible="service != 'plaid' or not plaid_access_token"
-                />
-                <button
-                    type="object"
-                    class="btn btn-secondary"
-                    name="action_link_existing_plaid"
-                    string="Link Existing Plaid Connection"
-                    invisible="service != 'plaid' or plaid_access_token"
                 />
             </xpath>
         </field>

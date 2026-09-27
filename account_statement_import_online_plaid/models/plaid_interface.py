@@ -5,6 +5,8 @@ import plaid
 from plaid.api import plaid_api
 from plaid.model.accounts_get_request import AccountsGetRequest
 from plaid.model.country_code import CountryCode
+from plaid.model.institutions_get_by_id_request import InstitutionsGetByIdRequest
+from plaid.model.item_get_request import ItemGetRequest
 from plaid.model.item_public_token_exchange_request import (
     ItemPublicTokenExchangeRequest,
 )
@@ -69,13 +71,41 @@ class PlaidInterface(models.AbstractModel):
             raise ValidationError(_("Error getting link token: %s") % e.body) from e
         return response.to_dict()["link_token"]
 
-    def _login(self, client, public_token):
+    def _exchange_public_token(self, client, public_token):
         request = ItemPublicTokenExchangeRequest(public_token=public_token)
         try:
             response = client.item_public_token_exchange(request)
         except plaid.ApiException as e:
             raise ValidationError(_("Error getting access token: %s") % e.body) from e
-        return response["access_token"]
+        return {
+            "access_token": response["access_token"],
+            "item_id": response.get("item_id"),
+        }
+
+    def _login(self, client, public_token):
+        return self._exchange_public_token(client, public_token)["access_token"]
+
+    def _get_item(self, client, access_token):
+        request = ItemGetRequest(access_token=access_token)
+        try:
+            response = client.item_get(request)
+            return response.to_dict()["item"]
+        except plaid.ApiException as e:
+            raise ValidationError(_("Error getting item: %s") % e.body) from e
+
+    def _get_institution_name(self, client, institution_id, country_codes=None):
+        if not institution_id:
+            return False
+        codes = [CountryCode(c) for c in (country_codes or ["CA", "US"])]
+        request = InstitutionsGetByIdRequest(
+            institution_id=institution_id,
+            country_codes=codes,
+        )
+        try:
+            response = client.institutions_get_by_id(request)
+            return response.to_dict()["institution"].get("name")
+        except plaid.ApiException:
+            return False
 
     def _get_accounts(self, client, access_token):
         request = AccountsGetRequest(access_token=access_token)

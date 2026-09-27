@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <record id="view_account_journal_form_inherit_plaid" model="ir.ui.view">
+        <field name="name">account.journal.form.inherit.plaid</field>
+        <field name="model">account.journal</field>
+        <field
+            name="inherit_id"
+            ref="account_statement_import_online.view_account_journal_form"
+        />
+        <field name="arch" type="xml">
+            <xpath expr="//group[@name='online_bank_statements']" position="inside">
+                <field
+                    name="plaid_bank_account_id"
+                    string="Plaid Account"
+                    invisible="online_bank_statement_provider != 'plaid'"
+                    options="{'no_create': True}"
+                />
+                <button
+                    name="%(account_statement_import_online_plaid.action_plaid_bank_connection)d"
+                    type="action"
+                    string="Plaid Bank Connections"
+                    class="btn btn-secondary"
+                    icon="fa-university"
+                    invisible="online_bank_statement_provider != 'plaid'"
+                />
+            </xpath>
+        </field>
+    </record>
+</odoo>

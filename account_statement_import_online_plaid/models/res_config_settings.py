@@ -7,17 +7,19 @@ class ResConfigSettings(models.TransientModel):
     _inherit = "res.config.settings"
 
     plaid_client_id = fields.Char(
-        related="company_id.plaid_client_id",
-        readonly=False,
         string="Plaid Client ID",
+        config_parameter="account_statement_import_online_plaid.plaid_client_id",
     )
     plaid_secret = fields.Char(
-        related="company_id.plaid_secret",
-        readonly=False,
         string="Plaid Secret Key",
+        config_parameter="account_statement_import_online_plaid.plaid_secret",
     )
     plaid_host = fields.Selection(
-        related="company_id.plaid_host",
-        readonly=False,
+        [
+            ("sandbox", "Sandbox"),
+            ("production", "Production"),
+        ],
+        default="sandbox",
         string="Plaid Host",
+        config_parameter="account_statement_import_online_plaid.plaid_host",
     )

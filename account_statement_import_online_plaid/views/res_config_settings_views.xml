@@ -10,7 +10,7 @@
                     <setting
                         id="plaid_credentials_setting"
                         string="Plaid Credentials"
-                        help="Company-wide API credentials for Plaid. Bank journals will automatically use these credentials unless overridden."
+                        help="Global API credentials for Plaid across the server. Bank journals will automatically use these credentials."
                     >
                         <div class="content-group">
                             <div class="row mt16">
@@ -33,6 +33,15 @@
                                     class="col-lg-3 o_light_label"
                                 />
                                 <field name="plaid_host" />
+                            </div>
+                            <div class="mt16">
+                                <button
+                                    name="%(account_statement_import_online_plaid.action_plaid_bank_connection)d"
+                                    type="action"
+                                    string="Manage Plaid Bank Connections"
+                                    class="btn btn-secondary"
+                                    icon="fa-university"
+                                />
                             </div>
                         </div>
                     </setting>

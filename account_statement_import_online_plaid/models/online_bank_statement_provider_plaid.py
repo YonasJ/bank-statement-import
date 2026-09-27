@@ -38,6 +38,15 @@ class OnlineBankStatementProvider(models.Model):
         ],
         string="Plaid Host",
     )
+    plaid_connection_id = fields.Many2one(
+        "plaid.bank.connection",
+        string="Plaid Bank Connection",
+    )
+    plaid_bank_account_id = fields.Many2one(
+        "plaid.bank.account",
+        string="Plaid Bank Account",
+        domain="[('connection_id', '=', plaid_connection_id)]",
+    )
     plaid_account_id = fields.Char(string="Plaid Account ID")
     plaid_account_name = fields.Char(string="Plaid Account Name", readonly=True)
     plaid_account_mask = fields.Char(string="Plaid Account Mask", readonly=True)
@@ -45,17 +54,80 @@ class OnlineBankStatementProvider(models.Model):
         string="Plaid Account Currency", readonly=True
     )
 
+    @api.onchange("plaid_connection_id")
+    def _onchange_plaid_connection_id(self):
+        if (
+            self.plaid_bank_account_id
+            and self.plaid_bank_account_id.connection_id != self.plaid_connection_id
+        ):
+            self.plaid_bank_account_id = False
+            self.plaid_account_id = False
+            self.plaid_account_name = False
+            self.plaid_account_mask = False
+            self.plaid_account_currency = False
+
+    @api.onchange("plaid_bank_account_id")
+    def _onchange_plaid_bank_account_id(self):
+        if self.plaid_bank_account_id:
+            self.plaid_account_id = self.plaid_bank_account_id.plaid_account_id
+            self.plaid_account_name = self.plaid_bank_account_id.name
+            self.plaid_account_mask = self.plaid_bank_account_id.mask
+            self.plaid_account_currency = self.plaid_bank_account_id.currency_code
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if vals.get("plaid_bank_account_id"):
+                acc = self.env["plaid.bank.account"].browse(vals["plaid_bank_account_id"])
+                vals["plaid_account_id"] = acc.plaid_account_id
+                vals["plaid_account_name"] = acc.name
+                vals["plaid_account_mask"] = acc.mask
+                vals["plaid_account_currency"] = acc.currency_code
+        return super().create(vals_list)
+
+    def write(self, vals):
+        if vals.get("plaid_bank_account_id"):
+            acc = self.env["plaid.bank.account"].browse(vals["plaid_bank_account_id"])
+            vals["plaid_account_id"] = acc.plaid_account_id
+            vals["plaid_account_name"] = acc.name
+            vals["plaid_account_mask"] = acc.mask
+            vals["plaid_account_currency"] = acc.currency_code
+        elif "plaid_bank_account_id" in vals and not vals["plaid_bank_account_id"]:
+            vals["plaid_account_id"] = False
+            vals["plaid_account_name"] = False
+            vals["plaid_account_mask"] = False
+            vals["plaid_account_currency"] = False
+        return super().write(vals)
+
     def _get_plaid_client_id(self):
         self.ensure_one()
-        return self.username or self.company_id.plaid_client_id or ""
+        ICP = self.env["ir.config_parameter"].sudo()
+        return (
+            self.username
+            or ICP.get_param("account_statement_import_online_plaid.plaid_client_id")
+            or self.company_id.plaid_client_id
+            or ""
+        )
 
     def _get_plaid_secret(self):
         self.ensure_one()
-        return self.password or self.company_id.plaid_secret or ""
+        ICP = self.env["ir.config_parameter"].sudo()
+        return (
+            self.password
+            or ICP.get_param("account_statement_import_online_plaid.plaid_secret")
+            or self.company_id.plaid_secret
+            or ""
+        )
 
     def _get_plaid_host(self):
         self.ensure_one()
-        return self.plaid_host or self.company_id.plaid_host or "sandbox"
+        ICP = self.env["ir.config_parameter"].sudo()
+        return (
+            self.plaid_host
+            or ICP.get_param("account_statement_import_online_plaid.plaid_host")
+            or self.company_id.plaid_host
+            or "sandbox"
+        )
 
     def _get_plaid_client(self):
         self.ensure_one()
@@ -104,13 +176,17 @@ class OnlineBankStatementProvider(models.Model):
         )
         company_name = self.env.company.name
 
+        access_token = (
+            self.plaid_connection_id.plaid_access_token
+            or self.plaid_access_token
+        )
         link_token = plaid_interface._link(
             client=client,
             language=self._verify_lang(lang),
             country_code=self._country_code(),
             company_name=company_name,
             products=["transactions"],
-            access_token=self.plaid_access_token or None,
+            access_token=access_token or None,
         )
         return {
             "type": "ir.actions.client",
@@ -126,14 +202,18 @@ class OnlineBankStatementProvider(models.Model):
 
     def _auto_match_plaid_account(self, accounts=None):
         self.ensure_one()
-        if not self.plaid_access_token:
+        access_token = (
+            self.plaid_connection_id.plaid_access_token
+            or self.plaid_access_token
+        )
+        if not access_token:
             return False
         if accounts is None:
             plaid_interface = self.env["plaid.interface"]
             client = self._get_plaid_client()
             try:
                 accounts = plaid_interface._get_accounts(
-                    client, self.plaid_access_token
+                    client, access_token
                 )
             except Exception as e:
                 _logger.warning("Failed to fetch Plaid accounts for matching: %s", e)
@@ -289,19 +369,28 @@ class OnlineBankStatementProvider(models.Model):
         }
 
     def _plaid_retrieve_data(self, date_since, date_until):
-        if not self.plaid_access_token:
+        access_token = (
+            self.plaid_connection_id.plaid_access_token
+            or self.plaid_access_token
+        )
+        if not access_token:
             raise UserError(
                 _(
-                    "Please link your Plaid account first by "
-                    "clicking on 'Sync with Plaid'."
+                    "Please link your Plaid connection or provider first by "
+                    "selecting a Plaid Bank Connection or clicking 'Sync with Plaid'."
                 )
             )
-        if not self.plaid_account_id:
+        account_id = (
+            self.plaid_bank_account_id.plaid_account_id
+            or self.plaid_account_id
+        )
+        if not account_id and not self.plaid_bank_account_id:
             self._auto_match_plaid_account()
-        if not self.plaid_account_id:
+            account_id = self.plaid_account_id
+        if not account_id:
             raise UserError(
                 _(
-                    "Please select a Plaid account for journal '%s' by clicking 'Select Plaid Account'."
+                    "Please select a Plaid account for journal '%s'."
                 )
                 % self.journal_id.display_name
             )
@@ -309,16 +398,15 @@ class OnlineBankStatementProvider(models.Model):
         client = self._get_plaid_client()
         transactions = plaid_interface._get_transactions(
             client,
-            self.plaid_access_token,
+            access_token,
             date_since,
             date_until,
-            account_ids=[self.plaid_account_id] if self.plaid_account_id else None,
+            account_ids=[account_id],
         )
         # Extra safety check: ensure transactions belong to this account
-        if self.plaid_account_id:
-            transactions = [
-                t for t in transactions if t.get("account_id") == self.plaid_account_id
-            ]
+        transactions = [
+            t for t in transactions if t.get("account_id") == account_id
+        ]
         return self._prepare_vals_for_statement(transactions)
 
     @api.model

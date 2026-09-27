@@ -205,3 +205,54 @@ class TestAccountStatementImportOnlinePlaid(common.TransactionCase):
         self.assertEqual(action["type"], "ir.actions.client")
         self.assertEqual(action["tag"], "plaid_login")
         self.assertEqual(action["params"]["token"], "isalinktoken")
+
+    @patch("plaid.api.plaid_api.PlaidApi.accounts_get")
+    def test_plaid_bank_connection_and_accounts(self, accounts_get):
+        self.env["ir.config_parameter"].sudo().set_param(
+            "account_statement_import_online_plaid.plaid_client_id", "test_client"
+        )
+        self.env["ir.config_parameter"].sudo().set_param(
+            "account_statement_import_online_plaid.plaid_secret", "test_secret"
+        )
+        accounts_get.return_value = MagicMock(
+            to_dict=lambda: {
+                "accounts": [
+                    {
+                        "account_id": "acc_usd_123",
+                        "name": "Checking USD",
+                        "mask": "1541",
+                        "type": "depository",
+                        "subtype": "checking",
+                        "balances": {"iso_currency_code": "USD"},
+                    },
+                    {
+                        "account_id": "acc_cad_456",
+                        "name": "Savings CAD",
+                        "mask": "3507",
+                        "type": "depository",
+                        "subtype": "savings",
+                        "balances": {"iso_currency_code": "CAD"},
+                    },
+                ]
+            }
+        )
+        conn = self.env["plaid.bank.connection"].create({
+            "name": "Test Bank",
+            "plaid_access_token": "test_token",
+            "state": "connected",
+        })
+        conn.action_fetch_accounts()
+        self.assertEqual(len(conn.account_ids), 2)
+        usd_acc = conn.account_ids.filtered(lambda a: a.plaid_account_id == "acc_usd_123")
+        self.assertTrue(usd_acc)
+        self.assertEqual(usd_acc.mask, "1541")
+        self.assertIn("1541", usd_acc.display_name)
+
+        # Test linking to provider
+        self.provider.write({
+            "plaid_connection_id": conn.id,
+            "plaid_bank_account_id": usd_acc.id,
+        })
+        self.assertEqual(self.provider.plaid_account_id, "acc_usd_123")
+        self.assertEqual(self.provider.plaid_account_mask, "1541")
+
