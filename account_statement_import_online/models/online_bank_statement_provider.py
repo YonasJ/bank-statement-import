@@ -35,7 +35,7 @@ class OnlineBankStatementProvider(models.Model):
         comodel_name="account.journal",
         required=True,
         ondelete="cascade",
-        domain=[("type", "=", "bank")],
+        domain=[("type", "in", ("bank", "credit"))],
     )
     currency_id = fields.Many2one(related="journal_id.currency_id")
     account_number = fields.Char(

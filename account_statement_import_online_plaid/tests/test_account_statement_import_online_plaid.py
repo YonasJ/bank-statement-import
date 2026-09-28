@@ -233,6 +233,14 @@ class TestAccountStatementImportOnlinePlaid(common.TransactionCase):
                         "subtype": "savings",
                         "balances": {"iso_currency_code": "CAD"},
                     },
+                    {
+                        "account_id": "acc_cc_789",
+                        "name": "Visa Platinum",
+                        "mask": "9012",
+                        "type": "credit",
+                        "subtype": "credit card",
+                        "balances": {"iso_currency_code": "USD"},
+                    },
                 ]
             }
         )
@@ -242,7 +250,7 @@ class TestAccountStatementImportOnlinePlaid(common.TransactionCase):
             "state": "connected",
         })
         conn.action_fetch_accounts()
-        self.assertEqual(len(conn.account_ids), 2)
+        self.assertEqual(len(conn.account_ids), 3)
         usd_acc = conn.account_ids.filtered(lambda a: a.plaid_account_id == "acc_usd_123")
         self.assertTrue(usd_acc)
         self.assertEqual(usd_acc.mask, "1541")
@@ -255,4 +263,27 @@ class TestAccountStatementImportOnlinePlaid(common.TransactionCase):
         })
         self.assertEqual(self.provider.plaid_account_id, "acc_usd_123")
         self.assertEqual(self.provider.plaid_account_mask, "1541")
+
+        # Test linking credit card account to credit journal
+        cc_acc = conn.account_ids.filtered(lambda a: a.plaid_account_id == "acc_cc_789")
+        self.assertTrue(cc_acc)
+        self.assertEqual(cc_acc.mask, "9012")
+        self.assertEqual(cc_acc.account_type, "credit")
+
+        credit_journal = self.AccountJournal.create({
+            "name": "Visa Credit Card",
+            "type": "credit",
+            "code": "VCC",
+            "currency_id": self.currency_eur.id,
+        })
+        cc_acc.journal_id = credit_journal.id
+        self.assertEqual(cc_acc.journal_id, credit_journal)
+        self.assertEqual(credit_journal.bank_statements_source, "online")
+        self.assertEqual(credit_journal.online_bank_statement_provider, "plaid")
+        cc_provider = self.env["online.bank.statement.provider"].search(
+            [("journal_id", "=", credit_journal.id)], limit=1
+        )
+        self.assertTrue(cc_provider)
+        self.assertEqual(cc_provider.plaid_bank_account_id, cc_acc)
+        self.assertEqual(cc_provider.plaid_account_id, "acc_cc_789")
 

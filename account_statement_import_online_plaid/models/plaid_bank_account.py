@@ -40,7 +40,7 @@ class PlaidBankAccount(models.Model):
         string="Linked Journal",
         compute="_compute_journal_id",
         inverse="_inverse_journal_id",
-        domain="[('type', '=', 'bank')]",
+        domain="[('type', 'in', ('bank', 'credit'))]",
     )
 
     @api.depends("provider_ids.journal_id")

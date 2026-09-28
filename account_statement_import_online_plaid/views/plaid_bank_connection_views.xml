@@ -101,7 +101,7 @@
                                     <field name="account_type" readonly="1" />
                                     <field name="subtype" readonly="1" />
                                     <field name="currency_code" readonly="1" />
-                                    <field name="journal_id" options="{'no_create': True}" />
+                                    <field name="journal_id" options="{'no_create': True}" domain="[('type', 'in', ('bank', 'credit'))]" />
                                     <field name="plaid_account_id" optional="hide" readonly="1" />
                                 </list>
                             </field>

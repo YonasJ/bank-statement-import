@@ -30,6 +30,10 @@ AVAILABLE_LANGS = [
 class OnlineBankStatementProvider(models.Model):
     _inherit = "online.bank.statement.provider"
 
+    journal_id = fields.Many2one(
+        "account.journal",
+        domain="[('type', 'in', ('bank', 'credit'))]",
+    )
     plaid_access_token = fields.Char(copy=False)
     plaid_host = fields.Selection(
         [
